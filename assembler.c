@@ -23,13 +23,14 @@ int main(int argc, char **argv)
 			int ctr=0,cmdcnt=0,ad1cnt=0,ad2cnt=0,ad3cnt=0;
 			for (int i = 0; line[i]; i++) {
 				if (line[i] == '\t') {
-					printf("*");
 					continue;
 				}
 				if (line[i] == ' ') {
 					ctr++;
 					continue;
 				}
+				if (line[i] == ';' || line[i] == '/')
+					break;
 				switch (ctr) {
 				case 0: cmd[cmdcnt++] = line[i];
 					break;

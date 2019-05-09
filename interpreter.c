@@ -181,6 +181,8 @@ int parser(FILE *in, struct instruction *ins)
 				ctr++;
 				continue;
 			}
+			if (line[i] == ';' || line[i] == '/')
+				break;
 			switch (ctr) {
 			case 0: ins[i].cmd[cmdcnt++] = line[j];
 				break;
