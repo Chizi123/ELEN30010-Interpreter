@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 void line_parser(int ad3cnt, int ad2cnt, int ad1cnt, int cmdcnt, int ctr, char *addr3, char *addr2, char *addr1, char *cmd, char *line);
 void print_bits(FILE *out, int num);
@@ -15,10 +16,12 @@ int main(int argc, char **argv)
 	int i_num=0,invalid_flag=0;
 	for (int i = 0; i < 2; i++) {
 		if (i) {
-			fprintf(out,"module AsyncROM(input [7:0] addr,\n\toutput reg [34:0] data);\n");
+			fprintf(out,"`include \"CPU.vh\"\n\nmodule AsyncROM(input [7:0] addr,\n\toutput reg [34:0] data);\n");
 			fprintf(out,"\talways @(addr)\n\t\tcase(addr)\n");
 		}
 		while (fgets(line, 1024, in)) {
+			if (strlen(line) < 5)
+				continue;
 			char cmd[5] = "", addr1[10] = "", addr2[10] = "", addr3[10] = "";
 			int ctr=0,cmdcnt=0,ad1cnt=0,ad2cnt=0,ad3cnt=0;
 			for (int i = 0; line[i]; i++) {
@@ -61,7 +64,7 @@ int main(int argc, char **argv)
 					fprintf(out,"`ATC,");
 					invalid_flag=print_loc(out,addr1,i);
 					fprintf(out,"`N10,`N10,");
-					print_bits(out,atoi(addr2));
+					print_bits(out,atoi(addr2)-1);
 				}
 				break;
 			case 0x564f4d: //MOV PUR (MOV)
@@ -92,7 +95,7 @@ int main(int argc, char **argv)
 				if (i) {
 					fprintf(out,"`JMP,`UNC,");
 					fprintf(out,"`N10,`N10,");
-					print_bits(out,atoi(addr1));
+					print_bits(out,atoi(addr1)-1);
 				}
 				break;
 			case 0x51454a: //JMP EQ (JEQ)
@@ -100,7 +103,7 @@ int main(int argc, char **argv)
 					fprintf(out,"`JMP,`EQ,");
 					print_where(out,addr1);
 					print_where(out,addr2);
-					print_bits(out,atoi(addr3));
+					print_bits(out,atoi(addr3)-1);
 				}
 				break;
 			case 0x544c554a: //JMP ULT (JULT)
@@ -108,7 +111,7 @@ int main(int argc, char **argv)
 					fprintf(out,"`JMP,`ULT,");
 					print_where(out, addr1);
 					print_where(out, addr2);
-					print_bits(out, atoi(addr3));
+					print_bits(out, atoi(addr3)-1);
 				}
 				break;
 			case 0x544c534a: //JMP SLT (JSLT)
@@ -116,7 +119,7 @@ int main(int argc, char **argv)
 					fprintf(out,"`JMP,`SLT,");
 					print_where(out, addr1);
 					print_where(out, addr2);
-					print_bits(out, atoi(addr3));
+					print_bits(out, atoi(addr3)-1);
 				}
 				break;
 			case 0x454c554a: //JMP ULE (JULE)
@@ -124,7 +127,7 @@ int main(int argc, char **argv)
 					fprintf(out,"`JMP,`ULE,");
 					print_where(out,addr1);
 					print_where(out,addr2);
-					print_bits(out,atoi(addr3));
+					print_bits(out,atoi(addr3)-1);
 				}
 				break;
 			case 0x454c534a: //JMP SLE (JSLE)
@@ -132,7 +135,7 @@ int main(int argc, char **argv)
 					fprintf(out,"`JMP,`SLE,");
 					print_where(out,addr1);
 					print_where(out,addr2);
-					print_bits(out,atoi(addr3));
+					print_bits(out,atoi(addr3)-1);
 				}
 				break;
 			case 0x444155: //ACC UAD (UAD)
@@ -204,7 +207,7 @@ int main(int argc, char **argv)
 			exit(0);
 		}
 		if (i) {
-			fprintf(out,"\t\t\tdefault: data = 3b'b0;\n");
+			fprintf(out,"\t\t\tdefault: data = 35'b0;\n");
 			fprintf(out,"\tendcase\nendmodule");
 		}
 		rewind(in);
@@ -230,6 +233,8 @@ void print_where(FILE *out, char* arg)
 		fprintf(out,"`REG,`DOUT,");
 	} else if (arg[0] == 'I') {
 		fprintf(out,"`REG,`DINP,");
+	} else if (arg[0] == 'G') {
+		fprintf(out,"`REG,`GOUT,");
 	} else {
 		fprintf(out, "`NUM,");
 		print_bits(out, atoi(arg));
@@ -252,20 +257,20 @@ int print_loc(FILE *out, char *loc, int run)
 		if (run)
 			fprintf(out,"`OFLW,");
 		break;
-	case 0x42544e32: //BTN2
+	case 0x324e5442: //BTN2
 		if (run)
-			fprintf(out,"010,");
+			fprintf(out,"3'b010,");
 		break;
 	case 0x314e5442: //BTN1
 		if (run)
-			fprintf(out,"001,");
+			fprintf(out,"3'b001,");
 		break;
 	case 0x304e5442: //BTN0
 		if (run)
-			fprintf(out,"000,");
+			fprintf(out,"3'b000,");
 		break;
 	default:
-		printf("ERROR: Invalid flag: %s");
+		printf("ERROR: Invalid flag: %s, %x",loc, *((int *)loc));
 		return 1;
 		break;
 	}
