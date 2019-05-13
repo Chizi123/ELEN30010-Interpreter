@@ -1,0 +1,76 @@
+#+TITLE: Assembler and Interpreter spec
+#  LocalWords:  atc ADDR NOP SMPL SHFT OFLW BTN JEQ JULT JSLT JULE JSLE MOV SHL SHR ACC UAD UMT SMT ANDs ORs XORs
+
+* Overview
+The assembler and interpreter contained in this project have their own instruction set based upon a 35 bit instruction.
+Each instruction contains 7 parts:
+- A 4 bit command group using one hot encoding
+- A 3 bit command using binary encoding
+- Two arguments, each 10 bits, which can either be a number, register or register whose location is stored within another register
+- An 8 bit address, used for jump and atc commands.
+An assembly instruction takes the form:
+[INSTRUCTION] [ADDR1] [ADDR2] [ADDR3]
+
+The CPU contains 32 registers, 8 bites in size, indexed from 0.
+The last 4 registers have special purposes.
+Register 28 (I) contains the latched contents of the input pins.
+Register 29 (G) contains mixed data. Bits 0 to 5 contain general purpose output and bit 7 turns on the display.
+Register 30 (D) contains the output of the CPU.
+Register 31 is the flag register. Bit 5 represents shift overflow, bit 4 represents arithmetic overflow, bit 3 represents the sample input, bit 2, 1 and 0 represent their respective button input.
+* The Assembler
+This program reads an assembly file and produces a Verilog source file containing the instructions.
+There is a header file with the commands and their binary codes, to simplify the process.
+* The Interpreter
+This program reads an assembly file and proceeds to emulate the CPU until it encounters a problem.
+* The Commands
+** NOP
+The no operation command consists of 35 0's.
+** ATC - Atomic test and clear
+Used to test a bit in the flag register, takes a bit to be tested. 
+SMPL can be used for the sample bit.
+SHFT is the shift overflow.
+OFLW is the arithmetic overflow.
+BTN2 is button 2.
+BTN1 is button 1.
+BTN0 is button 0.
+** JMP - Jump instruction group
+The JMP group is encoded as 4'b1000.
+The instructions utilise ADDR1 and ADDR2 arguments for the logic, if required and ADDR3 for the address.
+*** JMP - Unconditional jump
+This instruction changes the instruction pointer to the location specified in ADDR1 once it is executed.
+*** JEQ - Jump on equality
+If ADDR1 and ADDR2 are equal, the instruction pointer is set to ADDR3.
+*** JULT - Jump on unsigned less than
+If unsigned ADDR1 < unsigned ADDR2, IP = ADDR3
+*** JSLT - Jump on signed less than
+If signed ADDR1 < signed ADDR2, IP = ADDR3
+*** JULE - Jump on unsigned less than or equal
+If unsigned ADDR1 < unsigned ADDR2, IP = ADDR3
+*** JSLE - Jump of signed less than or equal
+If signed ADDR1 < signed ADDR2, IP = ADDR3
+** MOV - Move instruction group
+The MOV group is encoded as 4'b0100.
+All instructions take two arguments, ADDR1 and ADDR2.
+*** MOV - Pure move
+This takes the contents of ADDR1 and puts them into ADDR2.
+*** SHL - Logical shift left
+This takes the contents of ADDR1 and puts a left shifted version into ADDR2.
+*** SHR - Logical shift right
+This takes the contents of ADDR1 and puts a right shifted version into ADDR2.
+** ACC - Accumulate/Math group
+The ACC group is encoded with 4'b0001.
+All instructions take two arguments, ADDR1 and ADDR2.
+*** UAD - Unsigned addition
+Adds ADDR1 to ADDR2 as if they were unsigned numbers and stores the output in ADDR1.
+*** SAD - Signed addition
+Adds ADDR1 to ADDR2 as if they were signed numbers and stores the output in ADDR1.
+*** UMT - Unsigned multiply
+Multiplies ADDR1 to ADDR2 as if they were unsigned numbers and stores the output in ADDR1.
+*** SMT - Signed multiply
+Multiplies ADDR1 to ADDR2 as if they were signed numbers and stores the output in ADDR1.
+*** AND - Logical bit-wise AND
+ANDs ADDR1 and ADDR2 bit-wise and stores the value in ADDR1.
+*** OR - Logical bit-wise OR
+ORs ADDR1 and ADDR2 bit-wise and stores the value in ADDR1.
+*** XOR - Logical bit-wise XOR
+XORs ADDR1 and ADDR2 bit-wise and stores the value in ADDR1.
